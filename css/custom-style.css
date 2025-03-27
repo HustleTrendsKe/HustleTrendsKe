@@ -985,3 +985,31 @@ a.postsads-description {
 a.postsads-description:hover {
     color: #B47F41 !important; /* Turns brown on hover */
 }
+/* Responsive Input Fields */
+input, textarea, select, button {
+    font-size: 16px; /* Ensures tap-friendly text size */
+    width: 100%; /* Makes input fields fit the screen */
+    max-width: 400px; /* Prevents fields from getting too wide */
+    padding: 10px; /* Adds comfortable spacing */
+    margin-bottom: 10px; /* Adds space between inputs */
+    border: 1px solid #ccc; /* Light border for visibility */
+    border-radius: 5px; /* Soft rounded corners */
+}
+
+/* Adjust inputs for smaller screens */
+@media (max-width: 768px) {
+    input, textarea, select, button {
+        font-size: 14px; /* Slightly smaller font on mobile */
+        padding: 8px; /* Adjusts padding for smaller screens */
+        max-width: 100%; /* Ensures full width on smaller devices */
+    }
+}
+.form-container {
+    width: 100%;
+    max-width: 500px; /* Prevents it from stretching too much */
+    margin: auto; /* Centers the form */
+    padding: 15px;
+}
+git add .
+git commit -m "Improved input field responsiveness"
+git push origin main
