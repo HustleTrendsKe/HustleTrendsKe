@@ -1,3 +1,0 @@
-User-agent: *
-Allow: /
-Sitemap: https://hustletrendske.github.io/HustleTrendsKe/sitemap.xml
