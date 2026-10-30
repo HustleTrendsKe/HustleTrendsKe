@@ -200,10 +200,9 @@ details p{margin-top:10px;color:var(--mute)}
 
 <script>
 // ===== SETTINGS =====
-// Where submissions go. Leave empty for now: details are then sent to our WhatsApp.
-// Later, paste a Google Apps Script / Formspree / API URL here and submissions will be POSTed there as JSON.
-const ENDPOINT = '';
-const WHATSAPP = '254114556976';
+// Paste your deployed Google Apps Script Web App URL here.
+// It must start with https://script.google.com/macros/s/ and end with /exec.
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzaaDf5hYmpA6qSbUKz3_tCj_kX0PEdwtWsvEK-jq8_cKf56bB202XBVj-YtAajRATjbw/exec';
 
 const PLATFORMS=[
  ['Instagram','fab fa-instagram','#e1306c'],['TikTok','fab fa-tiktok','#111'],['X (Twitter)','fab fa-twitter','#1d9bf0'],
@@ -258,16 +257,55 @@ $('#form').onsubmit=e=>{
   refresh();
 };
 
-$('#submit').onclick=()=>{
-  const payload={submittedAt:new Date().toISOString(),platforms:Object.entries(data).map(([platform,d])=>({platform,...d}))};
-  const finish=()=>{$('#thanks').hidden=false;$('#thanks').scrollIntoView({behavior:'smooth'});$('#submit').disabled=true};
-  if(ENDPOINT){
-    fetch(ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(finish).catch(finish);
-  }else{
-    const lines=['*New influencer signup*',''];
-    payload.platforms.forEach(p=>lines.push(`*${p.platform}*`,`Link: ${p.link}`,`Followers: ${p.followers}`,`Per post: KSh ${p.amount}`,`Phone: ${p.phone}`,''));
-    window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(lines.join('\n'))}`,'_blank');
-    finish();
+$('#submit').onclick = async () => {
+  const submitButton = $('#submit');
+
+  // Never redirect registrations to WhatsApp or silently finish without an endpoint.
+  if (
+    !ENDPOINT ||
+    !ENDPOINT.startsWith('https://script.google.com/macros/s/') ||
+    !ENDPOINT.endsWith('/exec')
+  ) {
+    alert('Registration is not connected yet. Please try again later.');
+    return;
+  }
+
+  const platforms = Object.entries(data).map(([platform, details]) => ({
+    platform,
+    ...details
+  }));
+
+  if (platforms.length === 0) {
+    alert('Please add at least one social media platform before submitting.');
+    return;
+  }
+
+  const payload = {
+    submittedAt: new Date().toISOString(),
+    platforms
+  };
+
+  submitButton.disabled = true;
+  submitButton.textContent = 'Submitting...';
+
+  try {
+    // Apps Script web apps commonly require no-cors for a browser POST.
+    // The opaque response cannot confirm whether Apps Script wrote the rows.
+    await fetch(ENDPOINT, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+
+    $('#thanks').hidden = false;
+    $('#thanks').scrollIntoView({ behavior: 'smooth' });
+    submitButton.textContent = 'Submitted';
+  } catch (error) {
+    console.error('Influencer registration submission failed:', error);
+    alert('We could not send your registration. Please check your internet connection and try again.');
+    submitButton.disabled = false;
+    submitButton.textContent = 'Submit my details';
   }
 };
 refresh();
