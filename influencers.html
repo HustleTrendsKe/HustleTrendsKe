@@ -200,9 +200,8 @@ details p{margin-top:10px;color:var(--mute)}
 
 <script>
 // ===== SETTINGS =====
-// Paste your deployed Google Apps Script Web App URL here.
-// It must start with https://script.google.com/macros/s/ and end with /exec.
-const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzaaDf5hYmpA6qSbUKz3_tCj_kX0PEdwtWsvEK-jq8_cKf56bB202XBVj-YtAajRATjbw/exec';
+// Influencer registrations are sent only to this Google Apps Script Web App.
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbyKhYOUWOYOLoPtrGi7PKrc6w0-OLx-Js2C0xPGh8RB-aQZDsLT1n2kyq1A-_spnfxM/exec';
 
 const PLATFORMS=[
  ['Instagram','fab fa-instagram','#e1306c'],['TikTok','fab fa-tiktok','#111'],['X (Twitter)','fab fa-twitter','#1d9bf0'],
@@ -259,24 +258,18 @@ $('#form').onsubmit=e=>{
 
 $('#submit').onclick = async () => {
   const submitButton = $('#submit');
-
-  // Never redirect registrations to WhatsApp or silently finish without an endpoint.
-  if (
-    !ENDPOINT ||
-    !ENDPOINT.startsWith('https://script.google.com/macros/s/') ||
-    !ENDPOINT.endsWith('/exec')
-  ) {
-    alert('Registration is not connected yet. Please try again later.');
-    return;
-  }
-
   const platforms = Object.entries(data).map(([platform, details]) => ({
     platform,
     ...details
   }));
 
-  if (platforms.length === 0) {
-    alert('Please add at least one social media platform before submitting.');
+  if (!platforms.length) {
+    alert('Please add at least one platform before submitting.');
+    return;
+  }
+
+  if (!ENDPOINT || !ENDPOINT.startsWith('https://script.google.com/macros/s/') || !ENDPOINT.endsWith('/exec')) {
+    alert('Registration is temporarily unavailable. Please try again later.');
     return;
   }
 
@@ -289,8 +282,8 @@ $('#submit').onclick = async () => {
   submitButton.textContent = 'Submitting...';
 
   try {
-    // Apps Script web apps commonly require no-cors for a browser POST.
-    // The opaque response cannot confirm whether Apps Script wrote the rows.
+    // Apps Script ContentService does not expose a readable CORS response.
+    // The request is sent as text/plain so the browser can make a simple POST.
     await fetch(ENDPOINT, {
       method: 'POST',
       mode: 'no-cors',
@@ -302,8 +295,8 @@ $('#submit').onclick = async () => {
     $('#thanks').scrollIntoView({ behavior: 'smooth' });
     submitButton.textContent = 'Submitted';
   } catch (error) {
-    console.error('Influencer registration submission failed:', error);
-    alert('We could not send your registration. Please check your internet connection and try again.');
+    console.error('Google Sheets submission failed:', error);
+    alert('Your details could not be sent. Please check your internet connection and try again.');
     submitButton.disabled = false;
     submitButton.textContent = 'Submit my details';
   }
