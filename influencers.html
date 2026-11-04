@@ -199,9 +199,17 @@ details p{margin-top:10px;color:var(--mute)}
 </div></footer>
 
 <script>
-// ===== SETTINGS =====
-// Influencer registrations are sent only to this Google Apps Script Web App.
-const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwIAh2-22BAA2SLgHAlQM1mwKFsMOuNr84H5Tmj34sxNloq2UY6oh6REQzs_jAOOSUe/exec';
+// ===== SETTINGS: CHANGE THESE 7 VALUES =====
+const FORM_ID = 'https://docs.google.com/forms/d/e/1FAIpQLSdgiivvES1KabAwNTFqK6dt9z5u1LhYVB57Iucq8aVzlpBAiQ/viewform?usp=pp_url&entry.728261710=gfshdah&entry.1689091072=frghjk&entry.205816142=fjkkkjhg&entry.1855175043=lkjsd&entry.1675852341=fdgdjkwjuds&entry.1615243514=whshsh';          // CHANGE THIS
+const ENTRY = {
+  platform:     'entry.111111111',
+  link:         'entry.222222222',
+  followers:    'entry.333333333',
+  amount:       'entry.444444444',
+  phone:        'entry.555555555',
+  submissionId: 'entry.666666666'
+};
+const FORM_URL = 'https://docs.google.com/forms/d/e/' + FORM_ID + '/formResponse';
 
 const PLATFORMS=[
  ['Instagram','fab fa-instagram','#e1306c'],['TikTok','fab fa-tiktok','#111'],['X (Twitter)','fab fa-twitter','#1d9bf0'],
@@ -256,46 +264,46 @@ $('#form').onsubmit=e=>{
   refresh();
 };
 
+// ===== SUBMIT TO GOOGLE FORM =====
 $('#submit').onclick = async () => {
   const submitButton = $('#submit');
-  const platforms = Object.entries(data).map(([platform, details]) => ({
-    platform,
-    ...details
-  }));
+  const platforms = Object.entries(data).map(([platform, details]) => ({ platform, ...details }));
 
   if (!platforms.length) {
     alert('Please add at least one platform before submitting.');
     return;
   }
 
-  if (!ENDPOINT || !ENDPOINT.startsWith('https://script.google.com/macros/s/') || !ENDPOINT.endsWith('/exec')) {
-    alert('Registration is temporarily unavailable. Please try again later.');
-    return;
-  }
-
-  const payload = {
-    submittedAt: new Date().toISOString(),
-    platforms
-  };
+  // One ID shared by every platform from the same person
+  const submissionId = Math.random().toString(36).slice(2, 10).toUpperCase();
 
   submitButton.disabled = true;
   submitButton.textContent = 'Submitting...';
 
   try {
-    // Apps Script ContentService does not expose a readable CORS response.
-    // The request is sent as text/plain so the browser can make a simple POST.
-    await fetch(ENDPOINT, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    });
+    // One form response per platform
+    await Promise.all(platforms.map(p => {
+      const body = new URLSearchParams();
+      body.append(ENTRY.platform, p.platform);
+      body.append(ENTRY.link, p.link);
+      body.append(ENTRY.followers, p.followers);
+      body.append(ENTRY.amount, p.amount);
+      body.append(ENTRY.phone, p.phone);
+      body.append(ENTRY.submissionId, submissionId);
+
+      return fetch(FORM_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      });
+    }));
 
     $('#thanks').hidden = false;
     $('#thanks').scrollIntoView({ behavior: 'smooth' });
     submitButton.textContent = 'Submitted';
   } catch (error) {
-    console.error('Google Sheets submission failed:', error);
+    console.error('Form submission failed:', error);
     alert('Your details could not be sent. Please check your internet connection and try again.');
     submitButton.disabled = false;
     submitButton.textContent = 'Submit my details';
